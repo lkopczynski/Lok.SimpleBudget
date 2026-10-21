@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# Data exports contain personal expense data
+budget-*.json
+
+# Local tooling artifacts
+node_modules/
+.tmp_*
