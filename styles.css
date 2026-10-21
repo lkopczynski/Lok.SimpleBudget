@@ -1,0 +1,150 @@
+:root {
+  --fg: #000;
+  --bg: #fff;
+  --accent: #ffe600;
+  --danger: #ff2d2d;
+  --muted: #555;
+  --border: 3px solid var(--fg);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--fg);
+  background: var(--bg);
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+main {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 16px;
+  display: grid;
+  gap: 24px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: var(--border);
+  padding-bottom: 8px;
+}
+
+h1 { margin: 0; font-size: 1.75rem; font-weight: 900; letter-spacing: -0.02em; }
+h2 { margin: 0 0 12px; font-size: 1rem; font-weight: 900; letter-spacing: 0.04em; }
+
+.label { margin: 0; font-weight: 900; letter-spacing: 0.08em; }
+.big {
+  margin: 0;
+  font-size: clamp(2.75rem, 14vw, 4.5rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  word-break: break-all;
+}
+.big.negative { color: var(--danger); }
+.muted { margin: 6px 0 0; color: var(--muted); font-weight: 600; }
+
+.bar { height: 16px; border: var(--border); margin-top: 12px; background: var(--bg); }
+#bar-fill { height: 100%; width: 0; background: var(--fg); transition: width .2s; }
+#bar-fill.over { background: var(--danger); }
+
+form { display: grid; gap: 12px; }
+main { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+
+.fab {
+  position: fixed;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: min(calc(100% - 32px), 488px);
+  min-height: 60px;
+  font-size: 1.1rem;
+  background: var(--accent);
+  color: var(--fg);
+  box-shadow: 6px 6px 0 var(--fg);
+}
+.fab:active { transform: translate(calc(-50% + 2px), 2px); box-shadow: 4px 4px 0 var(--fg); }
+
+dialog.sheet {
+  margin: auto auto 0;
+  width: 100%;
+  max-width: 520px;
+  padding: 0;
+  border-bottom: 0;
+  box-shadow: none;
+  background: var(--accent);
+}
+dialog.sheet.editing { background: var(--bg); }
+dialog.sheet form { padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
+dialog.sheet[open] { animation: slide-up .18s ease-out; }
+@keyframes slide-up { from { transform: translateY(100%); } }
+
+label { display: grid; gap: 4px; font-weight: 900; font-size: .8rem; letter-spacing: .06em; }
+
+input, select, button {
+  font: inherit;
+  font-size: 1rem;
+  color: var(--fg);
+  border: var(--border);
+  border-radius: 0;
+  padding: 10px 12px;
+  background: var(--bg);
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 48px;
+}
+/* iOS Safari renders date inputs with an intrinsic width that overflows otherwise. */
+input[type="datetime-local"] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+}
+input[type="datetime-local"]::-webkit-date-and-time-value { text-align: left; }
+label > * { min-width: 0; }
+input:focus, select:focus, button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
+
+.amount-wrap { display: flex; }
+.amount-wrap input { flex: 1; font-size: 1.5rem; font-weight: 900; border-right: 0; }
+.cur {
+  display: flex; align-items: center; padding: 0 12px;
+  border: var(--border); background: var(--fg); color: var(--bg);
+  font-weight: 900; font-size: 1rem;
+}
+
+.row { display: flex; gap: 8px; }
+button { cursor: pointer; font-weight: 900; letter-spacing: .06em; background: var(--fg); color: var(--bg); }
+button:active { transform: translate(2px, 2px); }
+button.ghost { background: var(--bg); color: var(--fg); }
+button.danger { background: var(--danger); color: var(--fg); }
+header button { width: auto; min-height: 40px; padding: 6px 12px; font-size: .8rem; }
+
+ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+li button {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 12px;
+  text-align: left;
+  background: var(--bg);
+  color: var(--fg);
+  letter-spacing: 0;
+}
+li button.active { background: var(--accent); }
+.desc { font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.amt { font-weight: 900; font-variant-numeric: tabular-nums; grid-row: span 2; align-self: center; font-size: 1.15rem; }
+.when { font-weight: 500; font-size: .85rem; color: var(--muted); }
+
+dialog {
+  border: var(--border);
+  padding: 16px;
+  width: min(92vw, 420px);
+  box-shadow: 8px 8px 0 var(--fg);
+}
+dialog::backdrop { background: rgba(0, 0, 0, .6); }
+.data { border-top: var(--border); padding-top: 12px; margin-top: 4px; }

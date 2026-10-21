@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <title>Budget</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <header>
+      <h1>BUDGET</h1>
+      <button id="settings-btn" class="ghost" type="button">SETTINGS</button>
+    </header>
+
+    <section id="summary">
+      <p class="label">LEFT</p>
+      <p id="left" class="big">—</p>
+      <div class="bar"><div id="bar-fill"></div></div>
+      <p id="spent-line" class="muted"></p>
+      <p id="reset-line" class="muted"></p>
+    </section>
+
+    <section>
+      <h2>THIS PERIOD</h2>
+      <ul id="list"></ul>
+      <p id="empty" class="muted">No expenses yet.</p>
+    </section>
+  </main>
+
+  <button id="add-btn" type="button" class="fab">+ ADD EXPENSE</button>
+
+  <dialog id="expense-sheet" class="sheet">
+    <form id="expense-form" autocomplete="off">
+      <h2 id="form-title">NEW EXPENSE</h2>
+      <label>AMOUNT
+        <span class="amount-wrap">
+          <input id="exp-amount" type="number" inputmode="decimal" step="0.01" min="0.01" required>
+          <span id="exp-cur" class="cur"></span>
+        </span>
+      </label>
+      <label>DESCRIPTION
+        <input id="exp-desc" type="text" maxlength="100" placeholder="Optional">
+      </label>
+      <label>DATE &amp; TIME
+        <input id="exp-date" type="datetime-local" required>
+      </label>
+      <div class="row">
+        <button id="exp-submit" type="submit">ADD</button>
+        <button id="exp-delete" type="button" class="danger" hidden>DELETE</button>
+        <button id="exp-cancel" type="button" class="ghost">CANCEL</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="settings">
+    <form id="settings-form">
+      <h2>BUDGET</h2>
+      <label>AMOUNT
+        <input id="set-amount" type="number" inputmode="decimal" step="0.01" min="0" required>
+      </label>
+      <label>CURRENCY
+        <select id="set-currency"></select>
+      </label>
+      <label>RESET
+        <select id="set-period">
+          <option value="monthly">Monthly</option>
+          <option value="weekly">Weekly</option>
+        </select>
+      </label>
+      <label id="row-month-mode">DAY OF MONTH
+        <select id="set-month-mode">
+          <option value="first">First day</option>
+          <option value="last">Last day</option>
+          <option value="specific">Specific day</option>
+        </select>
+      </label>
+      <label id="row-month-day">DAY (1–31)
+        <input id="set-month-day" type="number" inputmode="numeric" min="1" max="31" step="1">
+      </label>
+      <label id="row-weekday">DAY OF WEEK
+        <select id="set-weekday"></select>
+      </label>
+      <div class="row">
+        <button type="submit">SAVE</button>
+        <button id="settings-cancel" type="button" class="ghost">CANCEL</button>
+      </div>
+      <div class="data">
+        <h2>DATA</h2>
+        <div class="row">
+          <button id="export-btn" type="button" class="ghost">EXPORT</button>
+          <button id="import-btn" type="button" class="ghost">IMPORT</button>
+        </div>
+        <input id="import-file" type="file" accept="application/json,.json" hidden>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
