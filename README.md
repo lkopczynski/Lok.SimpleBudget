@@ -9,19 +9,27 @@ A minimal, offline-first PWA to track expenses against a single recurring budget
 
 **Live:** https://lkopczynski.github.io/Lok.SimpleBudget/
 
+## Structure
+
+```
+app/                     the PWA (everything that gets deployed)
+.github/workflows/       GitHub Pages deployment
+.github/rulesets/        branch protection ruleset (import via repo settings)
+```
+
 ## Run locally
 
 ```sh
-python3 -m http.server 8080
+python3 -m http.server 8080 -d app
 ```
 
 Open http://localhost:8080. Offline support needs HTTPS or `localhost`.
 
 ## Deploy
 
-Pushed to `main` and served by GitHub Pages (Settings → Pages → branch `main`, `/ (root)`).
+Pushes to `main` that touch `app/` deploy via GitHub Actions (Settings → Pages → Source: **GitHub Actions**).
 
-When changing app files, bump `CACHE` in `sw.js` so installed copies update.
+When changing app files, bump `CACHE` in `app/sw.js` so installed copies update.
 
 ## License
 
