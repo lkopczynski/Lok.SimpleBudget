@@ -1,5 +1,5 @@
 // Bump the version when app files change so clients pick up the update.
-const CACHE = 'simplebudget-v7';
+const CACHE = 'simplebudget-v8';
 const ASSETS = ['./', './index.html', './styles.css', './app.js', './manifest.webmanifest', './icon.svg', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (e) => {
