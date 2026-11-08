@@ -76,6 +76,7 @@ function render() {
 
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const days = Math.round((end - today) / DAY_MS);
+  $('per-day').textContent = `${money(left / days)} / day`;
   const nextStr = fmtDate(end, { weekday: 'short', day: 'numeric', month: 'short' });
   $('reset-line').textContent = `Resets ${nextStr} · ${days}d`;
 
