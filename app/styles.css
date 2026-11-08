@@ -49,6 +49,7 @@ h2 { margin: 0 0 12px; font-size: 1rem; font-weight: 900; letter-spacing: 0.04em
 }
 .big.negative { color: var(--danger); }
 .muted { margin: 6px 0 0; color: var(--muted); font-weight: 600; }
+.per-day { margin-top: 2px; font-size: .9rem; }
 
 .bar { height: 16px; border: var(--border); margin-top: 12px; background: var(--bg); }
 #bar-fill { height: 100%; width: 0; background: var(--fg); transition: width .2s; }
