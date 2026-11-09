@@ -108,10 +108,10 @@ function render() {
 /* ---------- Expense sheet ---------- */
 
 const sheet = $('expense-sheet');
+let sheetScrollY = 0;
 
 function resetForm() {
   editingId = null;
-  sheet.returnValue = '';
   $('expense-form').reset();
   sheet.classList.remove('editing');
   $('form-title').textContent = 'NEW EXPENSE';
@@ -120,10 +120,18 @@ function resetForm() {
   $('exp-date').value = toLocalInput(new Date());
 }
 
+function openSheet() {
+  // Fix the background before dialog focus or the mobile keyboard can scroll it.
+  sheetScrollY = window.scrollY;
+  document.body.style.top = `-${sheetScrollY}px`;
+  document.body.classList.add('sheet-open');
+  sheet.showModal();
+  $('exp-amount').focus({ preventScroll: true });
+}
+
 function openAdd() {
   resetForm();
-  sheet.showModal();
-  $('exp-amount').focus();
+  openSheet();
 }
 
 function startEdit(id) {
@@ -138,7 +146,7 @@ function startEdit(id) {
   $('exp-submit').textContent = 'SAVE';
   $('exp-delete').hidden = false;
   render();
-  sheet.showModal();
+  openSheet();
 }
 
 $('expense-form').addEventListener('submit', (ev) => {
@@ -154,7 +162,7 @@ $('expense-form').addEventListener('submit', (ev) => {
     expenses.push({ id: crypto.randomUUID?.() ?? String(Date.now() + Math.random()), ...data });
   }
   store(KEY_EXPENSES, expenses);
-  sheet.close(editingId ? '' : 'added');
+  sheet.close();
 });
 
 $('exp-delete').addEventListener('click', () => {
@@ -168,10 +176,11 @@ $('exp-cancel').addEventListener('click', () => sheet.close());
 $('add-btn').addEventListener('click', openAdd);
 // Covers save, delete, cancel, Esc and backdrop tap.
 sheet.addEventListener('close', () => {
-  const added = sheet.returnValue === 'added';
   resetForm();
   render();
-  if (added) window.scrollTo({ top: 0, behavior: 'instant' });
+  document.body.classList.remove('sheet-open');
+  document.body.style.removeProperty('top');
+  window.scrollTo({ top: sheetScrollY, behavior: 'instant' });
 });
 sheet.addEventListener('click', (ev) => { if (ev.target === sheet) sheet.close(); });
 
