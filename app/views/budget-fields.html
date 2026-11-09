@@ -1,0 +1,27 @@
+<template id="budget-fields-template">
+  <label><span data-i18n="amount">Amount</span>
+    <input name="amount" type="number" inputmode="decimal" step="0.01" min="0" required>
+  </label>
+  <label><span data-i18n="currency">Currency</span>
+    <select name="currency"></select>
+  </label>
+  <label><span data-i18n="reset">Reset</span>
+    <select name="period">
+      <option value="monthly" data-i18n="monthly">Monthly</option>
+      <option value="weekly" data-i18n="weekly">Weekly</option>
+    </select>
+  </label>
+  <label data-row="month-mode"><span data-i18n="dayOfMonth">Day of month</span>
+    <select name="month-mode">
+      <option value="first" data-i18n="firstDay">First day</option>
+      <option value="last" data-i18n="lastDay">Last day</option>
+      <option value="specific" data-i18n="specificDay">Specific day</option>
+    </select>
+  </label>
+  <label data-row="month-day"><span data-i18n="dayRange">Day (1–31)</span>
+    <input name="month-day" type="number" inputmode="numeric" min="1" max="31" step="1">
+  </label>
+  <label data-row="weekday"><span data-i18n="dayOfWeek">Day of week</span>
+    <select name="weekday"></select>
+  </label>
+</template>

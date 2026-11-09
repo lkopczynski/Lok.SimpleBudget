@@ -14,7 +14,6 @@
 [hidden] { display: none !important; }
 
 html { scrollbar-gutter: stable; }
-html:has(dialog:modal) { overflow: hidden; }
 
 body {
   margin: 0;
@@ -39,6 +38,8 @@ header {
 
 h1 { margin: 0; font-size: 1.75rem; font-weight: 900; letter-spacing: -0.02em; }
 h2 { margin: 0 0 12px; font-size: 1rem; font-weight: 900; letter-spacing: 0.04em; }
+h1, h2, .label, label, button { text-transform: uppercase; }
+input, select, li button { text-transform: none; }
 
 .label { margin: 0; font-weight: 900; letter-spacing: 0.08em; }
 .big {
@@ -58,7 +59,7 @@ h2 { margin: 0 0 12px; font-size: 1rem; font-weight: 900; letter-spacing: 0.04em
 #bar-fill { height: 100%; width: 0; background: var(--fg); transition: width .2s; }
 #bar-fill.over { background: var(--danger); }
 
-form { display: grid; gap: 12px; }
+form, .budget-fields { display: grid; gap: 12px; }
 main { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
 
 .fab {
@@ -75,24 +76,16 @@ main { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
 }
 .fab:active { transform: translate(calc(-50% + 2px), 2px); box-shadow: 4px 4px 0 var(--fg); }
 
-dialog.sheet {
-  position: fixed;
-  inset: 0;
-  margin: auto auto 0;
+.screen {
+  margin: 0 auto;
   width: 100%;
   max-width: 520px;
-  max-height: calc(100dvh - 16px);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 0;
-  border-bottom: 0;
-  box-shadow: none;
-  background: var(--accent);
+  min-height: 100dvh;
+  padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
 }
-dialog.sheet.editing { background: var(--bg); }
-dialog.sheet form { padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
-dialog.sheet[open] { animation: slide-up .18s ease-out; }
-@keyframes slide-up { from { transform: translateY(100%); } }
+.editor-header { display: grid; grid-template-columns: minmax(80px, 1fr) minmax(0, 2fr) minmax(80px, 1fr); gap: 8px; }
+.editor-header h2 { grid-column: 2; grid-row: 1; margin: 0; text-align: center; font-size: .75rem; letter-spacing: 0; overflow-wrap: anywhere; }
+.editor-header button { grid-column: 1; grid-row: 1; justify-self: start; min-height: 48px; border: 0; padding: 6px 0; background: transparent; font-weight: 600; letter-spacing: 0; }
 
 label { display: grid; gap: 4px; font-weight: 900; font-size: .8rem; letter-spacing: .06em; }
 
@@ -149,11 +142,4 @@ li button.active { background: var(--accent); }
 .amt { font-weight: 900; font-variant-numeric: tabular-nums; grid-row: span 2; align-self: center; font-size: 1.15rem; }
 .when { font-weight: 500; font-size: .85rem; color: var(--muted); }
 
-dialog {
-  border: var(--border);
-  padding: 16px;
-  width: min(92vw, 420px);
-  box-shadow: 8px 8px 0 var(--fg);
-}
-dialog::backdrop { background: rgba(0, 0, 0, .6); }
 .data { border-top: var(--border); padding-top: 12px; margin-top: 4px; }

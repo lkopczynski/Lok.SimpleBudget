@@ -1,0 +1,23 @@
+<main id="budget-screen">
+  <header>
+    <h1 data-i18n="budget">Budget</h1>
+    <button id="settings-btn" class="ghost" type="button" data-i18n="settings">Settings</button>
+  </header>
+
+  <section id="summary">
+    <p class="label" data-i18n="left">Left</p>
+    <p id="left" class="big">—</p>
+    <p id="per-day" class="muted per-day"></p>
+    <div class="bar"><div id="bar-fill"></div></div>
+    <p id="spent-line" class="muted"></p>
+    <p id="reset-line" class="muted"></p>
+  </section>
+
+  <section>
+    <h2 data-i18n="thisPeriod">This period</h2>
+    <ul id="list"></ul>
+    <p id="empty" class="muted" data-i18n="noExpenses">No expenses yet.</p>
+  </section>
+</main>
+
+<button id="add-btn" type="button" class="fab" data-i18n="addExpense">+ Add expense</button>

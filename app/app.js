@@ -1,5 +1,7 @@
 'use strict';
 
+import { language, locale, t, translate, translateValidation, clearValidation } from './i18n.js';
+
 const KEY_SETTINGS = 'simplebudget.settings';
 const KEY_EXPENSES = 'simplebudget.expenses';
 const CURRENCIES = ['CHF', 'EUR', 'USD', 'GBP', 'JPY', 'CAD', 'AUD', 'SEK', 'NOK', 'DKK', 'PLN', 'CZK', 'HUF'];
@@ -11,15 +13,35 @@ const load = (key, fallback) => {
 };
 const store = (key, value) => localStorage.setItem(key, JSON.stringify(value));
 
+document.documentElement.lang = language;
+document.title = t('budget');
+translate(document);
+
+try {
+  const views = await Promise.all(['budget', 'expense', 'setup', 'settings', 'budget-fields'].map(async (name) => {
+    const response = await fetch(`views/${name}.html`);
+    if (!response.ok) throw new Error(`Could not load ${name} view.`);
+    const template = document.createElement('template');
+    template.innerHTML = await response.text();
+    return template.content;
+  }));
+  $('app').replaceChildren(...views);
+} catch (error) {
+  $('app').textContent = t('loadError');
+  throw error;
+}
+
 let settings = load(KEY_SETTINGS, null);
 let expenses = load(KEY_EXPENSES, []);
 let editingId = null;
+let activeRoute = '';
+let applyingRoute = false;
 
 // Amounts are stored as integer cents to avoid float drift.
 const toCents = (value) => Math.round(parseFloat(value) * 100);
 const money = (cents) =>
-  new Intl.NumberFormat(undefined, { style: 'currency', currency: settings.currency }).format(cents / 100);
-const fmtDate = (d, opts) => new Intl.DateTimeFormat(undefined, opts).format(d);
+  new Intl.NumberFormat(locale, { style: 'currency', currency: settings.currency }).format(cents / 100);
+const fmtDate = (d, opts) => new Intl.DateTimeFormat(locale, opts).format(d);
 const toLocalInput = (d) => {
   const p = (n) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
@@ -72,13 +94,13 @@ function render() {
   const pct = settings.amount > 0 ? Math.min(100, (spent / settings.amount) * 100) : (spent > 0 ? 100 : 0);
   $('bar-fill').style.width = `${pct}%`;
   $('bar-fill').classList.toggle('over', left < 0);
-  $('spent-line').textContent = `${money(spent)} spent of ${money(settings.amount)}`;
+  $('spent-line').textContent = t('spentLine', { spent: money(spent), budget: money(settings.amount) });
 
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const days = Math.round((end - today) / DAY_MS);
-  $('per-day').textContent = `${money(left / days)} / day`;
+  $('per-day').textContent = t('perDay', { amount: money(left / days) });
   const nextStr = fmtDate(end, { weekday: 'short', day: 'numeric', month: 'short' });
-  $('reset-line').textContent = `Resets ${nextStr} · ${days}d`;
+  $('reset-line').textContent = t('resetLine', { date: nextStr, days });
 
   $('exp-cur').textContent = settings.currency;
 
@@ -105,43 +127,103 @@ function render() {
   $('empty').hidden = inPeriod.length > 0;
 }
 
-/* ---------- Expense sheet ---------- */
+/* ---------- Expense editor ---------- */
 
-const sheet = $('expense-sheet');
+const editor = $('expense-screen');
+const expenseFormValues = () => JSON.stringify([
+  $('exp-amount').value, $('exp-desc').value, $('exp-date').value,
+]);
+let initialExpenseValues = null;
+
+function canDiscardExpense() {
+  return editor.hidden || expenseFormValues() === initialExpenseValues
+    || confirm(t('discardExpense'));
+}
 
 function resetForm() {
   editingId = null;
   $('expense-form').reset();
-  sheet.classList.remove('editing');
-  $('form-title').textContent = 'NEW EXPENSE';
-  $('exp-submit').textContent = 'ADD';
+  clearValidation($('expense-form'));
+  editor.classList.remove('editing');
+  $('form-title').textContent = t('newExpense');
+  $('exp-submit').textContent = t('add');
   $('exp-delete').hidden = true;
   $('exp-date').value = toLocalInput(new Date());
 }
 
-function openSheet() {
-  sheet.showModal();
+function openExpense() {
+  initialExpenseValues = expenseFormValues();
+  showScreen('expense-screen', editingId ? `#/expenses/${encodeURIComponent(editingId)}` : '#/expenses/new');
   $('exp-amount').focus({ preventScroll: true });
+}
+
+function showScreen(id, route) {
+  document.activeElement?.blur();
+  for (const screenId of ['budget-screen', 'expense-screen', 'setup-screen', 'settings']) {
+    $(screenId).hidden = screenId !== id;
+  }
+  $('add-btn').hidden = id !== 'budget-screen';
+  if (!applyingRoute && location.hash !== route) {
+    history.pushState({ returnToBudget: activeRoute === '#/budget' }, '', route);
+  }
+  activeRoute = route;
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+function showBudget() {
+  showScreen('budget-screen', '#/budget');
+  resetForm();
+  render();
+}
+
+function closeScreen() {
+  const returnToBudget = history.state?.returnToBudget;
+  applyingRoute = true;
+  showBudget();
+  applyingRoute = false;
+  if (returnToBudget) history.back(); else history.replaceState(null, '', '#/budget');
+}
+
+function applyRoute() {
+  applyingRoute = true;
+  try {
+    if (!settings) {
+      openSetup();
+    } else if (location.hash === '#/settings') {
+      openSettings();
+    } else if (location.hash === '#/expenses/new') {
+      openAdd();
+    } else {
+      const match = /^#\/expenses\/([^/]+)$/.exec(location.hash);
+      let expenseId;
+      try { expenseId = match ? decodeURIComponent(match[1]) : null; } catch { expenseId = null; }
+      if (expenses.some((expense) => expense.id === expenseId)) startEdit(expenseId);
+      else showBudget();
+    }
+  } finally {
+    applyingRoute = false;
+  }
+  if (location.hash !== activeRoute) history.replaceState(history.state, '', activeRoute);
 }
 
 function openAdd() {
   resetForm();
-  openSheet();
+  openExpense();
 }
 
 function startEdit(id) {
   const e = expenses.find((x) => x.id === id);
-  if (!e) return;
+  if (!e) { openAdd(); return; }
   editingId = id;
   $('exp-amount').value = (e.amount / 100).toFixed(2);
   $('exp-desc').value = e.description;
   $('exp-date').value = toLocalInput(new Date(e.time));
-  sheet.classList.add('editing');
-  $('form-title').textContent = 'EDIT EXPENSE';
-  $('exp-submit').textContent = 'SAVE';
+  editor.classList.add('editing');
+  $('form-title').textContent = t('editExpense');
+  $('exp-submit').textContent = t('save');
   $('exp-delete').hidden = false;
   render();
-  openSheet();
+  openExpense();
 }
 
 $('expense-form').addEventListener('submit', (ev) => {
@@ -157,73 +239,107 @@ $('expense-form').addEventListener('submit', (ev) => {
     expenses.push({ id: crypto.randomUUID?.() ?? String(Date.now() + Math.random()), ...data });
   }
   store(KEY_EXPENSES, expenses);
-  sheet.close();
+  closeScreen();
 });
 
 $('exp-delete').addEventListener('click', () => {
-  if (!editingId || !confirm('Delete this expense?')) return;
+  if (!editingId || !confirm(t('confirmDelete'))) return;
   expenses = expenses.filter((e) => e.id !== editingId);
   store(KEY_EXPENSES, expenses);
-  sheet.close();
+  closeScreen();
 });
 
-$('exp-cancel').addEventListener('click', () => sheet.close());
+$('exp-cancel').addEventListener('click', () => {
+  if (canDiscardExpense()) closeScreen();
+});
 $('add-btn').addEventListener('click', openAdd);
-// Covers save, delete, cancel, Esc and backdrop tap.
-sheet.addEventListener('close', () => { resetForm(); render(); });
-sheet.addEventListener('click', (ev) => { if (ev.target === sheet) sheet.close(); });
+window.addEventListener('popstate', () => {
+  if (location.hash === activeRoute) return;
+  if (!canDiscardExpense() || !canDiscardSettings()) {
+    history.pushState({ returnToBudget: location.hash === '#/budget' }, '', activeRoute);
+    return;
+  }
+  applyRoute();
+  requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+});
 
 /* ---------- Settings ---------- */
 
-const dlg = $('settings');
+const settingsScreen = $('settings');
+const setupForm = $('setup-form');
+const settingsForm = $('settings-form');
+const settingsFormValues = () => JSON.stringify([...new FormData(settingsForm)]);
+let initialSettingsValues = null;
 
-$('set-currency').append(...CURRENCIES.map((c) => new Option(c, c)));
-// Monday-first ordering, values stay JS getDay() indices.
-$('set-weekday').append(...[1, 2, 3, 4, 5, 6, 0].map((i) => new Option(weekdayName(i), String(i))));
-
-function syncSettingsVisibility() {
-  const weekly = $('set-period').value === 'weekly';
-  $('row-month-mode').hidden = weekly;
-  $('row-month-day').hidden = weekly || $('set-month-mode').value !== 'specific';
-  $('row-weekday').hidden = !weekly;
-  $('set-month-day').required = !$('row-month-day').hidden;
-}
-$('set-period').addEventListener('change', syncSettingsVisibility);
-$('set-month-mode').addEventListener('change', syncSettingsVisibility);
-
-function openSettings() {
-  const s = settings ?? { amount: 0, currency: 'CHF', period: 'monthly', monthMode: 'first', monthDay: 1, weekday: 1 };
-  $('set-amount').value = settings ? (s.amount / 100).toFixed(2) : '';
-  $('set-currency').value = s.currency;
-  $('set-period').value = s.period;
-  $('set-month-mode').value = s.monthMode;
-  $('set-month-day').value = s.monthDay;
-  $('set-weekday').value = String(s.weekday);
-  $('settings-cancel').hidden = !settings;
-  $('export-btn').hidden = !settings;
-  syncSettingsVisibility();
-  dlg.showModal();
+function canDiscardSettings() {
+  return settingsScreen.hidden || settingsFormValues() === initialSettingsValues
+    || confirm(t('discardSettings'));
 }
 
-$('settings-form').addEventListener('submit', (ev) => {
-  ev.preventDefault();
-  const monthDay = Math.min(31, Math.max(1, parseInt($('set-month-day').value, 10) || 1));
+function syncBudgetVisibility(form) {
+  const fields = form.elements;
+  const weekly = fields.namedItem('period').value === 'weekly';
+  form.querySelector('[data-row="month-mode"]').hidden = weekly;
+  const monthDayRow = form.querySelector('[data-row="month-day"]');
+  monthDayRow.hidden = weekly || fields.namedItem('month-mode').value !== 'specific';
+  form.querySelector('[data-row="weekday"]').hidden = !weekly;
+  fields.namedItem('month-day').required = !monthDayRow.hidden;
+}
+
+function fillBudgetForm(form, budget) {
+  clearValidation(form);
+  const fields = form.elements;
+  fields.namedItem('amount').value = budget.amount === null ? '' : (budget.amount / 100).toFixed(2);
+  fields.namedItem('currency').value = budget.currency;
+  fields.namedItem('period').value = budget.period;
+  fields.namedItem('month-mode').value = budget.monthMode;
+  fields.namedItem('month-day').value = budget.monthDay;
+  fields.namedItem('weekday').value = String(budget.weekday);
+  syncBudgetVisibility(form);
+}
+
+function saveBudgetForm(form) {
+  const fields = form.elements;
+  const monthDay = Math.min(31, Math.max(1, parseInt(fields.namedItem('month-day').value, 10) || 1));
   settings = {
-    amount: toCents($('set-amount').value) || 0,
-    currency: $('set-currency').value,
-    period: $('set-period').value,
-    monthMode: $('set-month-mode').value,
+    amount: toCents(fields.namedItem('amount').value) || 0,
+    currency: fields.namedItem('currency').value,
+    period: fields.namedItem('period').value,
+    monthMode: fields.namedItem('month-mode').value,
     monthDay,
-    weekday: parseInt($('set-weekday').value, 10),
+    weekday: parseInt(fields.namedItem('weekday').value, 10),
   };
   store(KEY_SETTINGS, settings);
-  dlg.close();
-  render();
-});
+  closeScreen();
+}
 
-$('settings-cancel').addEventListener('click', () => dlg.close());
-// Budget must be set on first run, so block Esc-closing until then.
-dlg.addEventListener('cancel', (ev) => { if (!settings) ev.preventDefault(); });
+for (const [form, prefix] of [[setupForm, 'setup'], [settingsForm, 'set']]) {
+  form.querySelector('.budget-fields').append($('budget-fields-template').content.cloneNode(true));
+  for (const field of form.querySelectorAll('[name]')) field.id = `${prefix}-${field.name}`;
+  form.elements.namedItem('currency').append(...CURRENCIES.map((currency) => new Option(currency, currency)));
+  form.elements.namedItem('weekday').append(...[1, 2, 3, 4, 5, 6, 0].map((day) => new Option(weekdayName(day), String(day))));
+  form.elements.namedItem('period').addEventListener('change', () => syncBudgetVisibility(form));
+  form.elements.namedItem('month-mode').addEventListener('change', () => syncBudgetVisibility(form));
+  form.addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    saveBudgetForm(form);
+  });
+}
+
+function openSetup() {
+  fillBudgetForm(setupForm, { amount: null, currency: 'CHF', period: 'monthly', monthMode: 'first', monthDay: 1, weekday: 1 });
+  showScreen('setup-screen', '#/setup');
+}
+
+function openSettings() {
+  fillBudgetForm(settingsForm, settings);
+  initialSettingsValues = settingsFormValues();
+  showScreen('settings', '#/settings');
+}
+
+$('settings-cancel').addEventListener('click', () => {
+  if (canDiscardSettings()) closeScreen();
+});
 $('settings-btn').addEventListener('click', openSettings);
 
 /* ---------- Export / import ---------- */
@@ -242,7 +358,7 @@ function parseBackup(data) {
   const validExpenses = Array.isArray(data?.expenses) && data.expenses.every((e) =>
     e && typeof e.id === 'string' && isInt(e.amount, 1, Number.MAX_SAFE_INTEGER)
     && Number.isFinite(e.time) && typeof e.description === 'string');
-  if (!validSettings || !validExpenses) throw new Error('Invalid backup file.');
+  if (!validSettings || !validExpenses) throw new Error(t('invalidBackup'));
   return {
     settings: {
       amount: s.amount, currency: s.currency, period: s.period,
@@ -268,6 +384,7 @@ $('export-btn').addEventListener('click', async () => {
 });
 
 $('import-btn').addEventListener('click', () => $('import-file').click());
+$('setup-import-btn').addEventListener('click', () => $('import-file').click());
 
 $('import-file').addEventListener('change', async (ev) => {
   const file = ev.target.files[0];
@@ -277,22 +394,27 @@ $('import-file').addEventListener('change', async (ev) => {
   try {
     backup = parseBackup(JSON.parse(await file.text()));
   } catch {
-    alert('Could not read this file. Is it a budget export?');
+    alert(t('importError'));
     return;
   }
-  if (!confirm(`Replace all current data with ${backup.expenses.length} expense(s) from this file?`)) return;
+  if (!confirm(t('replaceData', { count: backup.expenses.length }))) return;
   settings = backup.settings;
   expenses = backup.expenses;
   store(KEY_SETTINGS, settings);
   store(KEY_EXPENSES, expenses);
-  dlg.close();
-  render();
+  closeScreen();
 });
 
 /* ---------- Boot ---------- */
 
+translate(document);
+document.addEventListener('invalid', (ev) => translateValidation(ev.target), true);
+document.addEventListener('input', (ev) => ev.target.setCustomValidity?.(''));
+document.addEventListener('change', (ev) => ev.target.setCustomValidity?.(''));
 resetForm();
-if (settings) render(); else openSettings();
+history.scrollRestoration = 'manual';
+render();
+applyRoute();
 
 document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });
 setInterval(render, 60000);
