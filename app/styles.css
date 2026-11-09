@@ -13,16 +13,12 @@
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 
+html { scrollbar-gutter: stable; }
+html:has(#expense-sheet:modal) { overflow: hidden; }
+
 body {
   margin: 0;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-}
-
-body.sheet-open {
-  position: fixed;
-  left: 0;
-  right: 0;
-  overflow: hidden;
 }
 
 main {

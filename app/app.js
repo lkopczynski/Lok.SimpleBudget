@@ -108,7 +108,6 @@ function render() {
 /* ---------- Expense sheet ---------- */
 
 const sheet = $('expense-sheet');
-let sheetScrollY = 0;
 
 function resetForm() {
   editingId = null;
@@ -121,10 +120,6 @@ function resetForm() {
 }
 
 function openSheet() {
-  // Fix the background before dialog focus or the mobile keyboard can scroll it.
-  sheetScrollY = window.scrollY;
-  document.body.style.top = `-${sheetScrollY}px`;
-  document.body.classList.add('sheet-open');
   sheet.showModal();
   $('exp-amount').focus({ preventScroll: true });
 }
@@ -175,13 +170,7 @@ $('exp-delete').addEventListener('click', () => {
 $('exp-cancel').addEventListener('click', () => sheet.close());
 $('add-btn').addEventListener('click', openAdd);
 // Covers save, delete, cancel, Esc and backdrop tap.
-sheet.addEventListener('close', () => {
-  resetForm();
-  render();
-  document.body.classList.remove('sheet-open');
-  document.body.style.removeProperty('top');
-  window.scrollTo({ top: sheetScrollY, behavior: 'instant' });
-});
+sheet.addEventListener('close', () => { resetForm(); render(); });
 sheet.addEventListener('click', (ev) => { if (ev.target === sheet) sheet.close(); });
 
 /* ---------- Settings ---------- */
