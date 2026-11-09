@@ -14,7 +14,7 @@
 [hidden] { display: none !important; }
 
 html { scrollbar-gutter: stable; }
-html:has(#expense-sheet:modal) { overflow: hidden; }
+html:has(dialog:modal) { overflow: hidden; }
 
 body {
   margin: 0;
