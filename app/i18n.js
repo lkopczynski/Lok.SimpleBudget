@@ -3,6 +3,7 @@ import de from './locales/de.js';
 import fr from './locales/fr.js';
 
 const messages = { en, de, fr };
+const KEY_LANGUAGE = 'simplebudget.language';
 
 export function detectLocale(device = globalThis.navigator) {
   const preferred = device?.languages?.[0] || device?.language;
@@ -15,7 +16,29 @@ export function detectLocale(device = globalThis.navigator) {
   return { language: 'en', locale: 'en' };
 }
 
-export const { language, locale } = detectLocale();
+export function resolveLocale(override, device = globalThis.navigator) {
+  const detected = detectLocale(device);
+  if (!Object.hasOwn(messages, override)) return detected;
+  return { language: override, locale: detected.language === override ? detected.locale : override };
+}
+
+function loadLanguageOverride() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEY_LANGUAGE));
+    return Object.hasOwn(messages, saved) ? saved : '';
+  } catch { return ''; }
+}
+
+export let languageOverride = loadLanguageOverride();
+export let { language, locale } = resolveLocale(languageOverride);
+
+export function setLanguageOverride(value) {
+  const override = Object.hasOwn(messages, value) ? value : '';
+  if (override) localStorage.setItem(KEY_LANGUAGE, JSON.stringify(override));
+  else localStorage.removeItem(KEY_LANGUAGE);
+  languageOverride = override;
+  ({ language, locale } = resolveLocale(override));
+}
 
 export function t(key, values = {}) {
   const message = messages[language][key] ?? en[key] ?? key;

@@ -1,5 +1,5 @@
 // Bump the version when app files change so clients pick up the update.
-const CACHE = 'simplebudget-v25';
+const CACHE = 'simplebudget-v31';
 const ASSETS = ['./', './index.html', './styles.css', './app.js', './manifest.webmanifest', './icon.svg', './icon-180.png', './icon-192.png', './icon-512.png',
   './views/budget.html', './views/expense.html', './views/setup.html', './views/settings.html', './views/budget-fields.html',
   './i18n.js', './locales/en.js', './locales/de.js', './locales/fr.js'];

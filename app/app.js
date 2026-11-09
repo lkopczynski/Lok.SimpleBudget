@@ -1,6 +1,6 @@
 'use strict';
 
-import { language, locale, t, translate, translateValidation, clearValidation } from './i18n.js';
+import { language, locale, languageOverride, setLanguageOverride, t, translate, translateValidation, clearValidation } from './i18n.js';
 
 const KEY_SETTINGS = 'simplebudget.settings';
 const KEY_EXPENSES = 'simplebudget.expenses';
@@ -77,6 +77,15 @@ function weekdayName(i) {
   return fmtDate(new Date(2023, 0, 1 + i), { weekday: 'long' });
 }
 
+function applyLanguage() {
+  document.documentElement.lang = language;
+  document.title = t('budget');
+  translate(document);
+  for (const option of document.querySelectorAll('select[name="weekday"] option')) {
+    option.textContent = weekdayName(Number(option.value));
+  }
+}
+
 /* ---------- Render ---------- */
 
 function render() {
@@ -99,8 +108,9 @@ function render() {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const days = Math.round((end - today) / DAY_MS);
   $('per-day').textContent = t('perDay', { amount: money(left / days) });
-  const nextStr = fmtDate(end, { weekday: 'short', day: 'numeric', month: 'short' });
-  $('reset-line').textContent = t('resetLine', { date: nextStr, days });
+  const resetDays = t(days === 1 ? 'resetDay' : 'resetDays', { days });
+  const resetDate = fmtDate(end, { month: 'short', day: 'numeric' });
+  $('reset-line').textContent = t('resetLine', { days: resetDays, date: resetDate });
 
   $('exp-cur').textContent = settings.currency;
 
@@ -154,7 +164,7 @@ function resetForm() {
 function openExpense() {
   initialExpenseValues = expenseFormValues();
   showScreen('expense-screen', editingId ? `#/expenses/${encodeURIComponent(editingId)}` : '#/expenses/new');
-  $('exp-amount').focus({ preventScroll: true });
+  if (!editingId) $('exp-amount').focus({ preventScroll: true });
 }
 
 function showScreen(id, route) {
@@ -310,6 +320,10 @@ function saveBudgetForm(form) {
     weekday: parseInt(fields.namedItem('weekday').value, 10),
   };
   store(KEY_SETTINGS, settings);
+  if (form === settingsForm) {
+    setLanguageOverride($('set-language').value);
+    applyLanguage();
+  }
   closeScreen();
 }
 
@@ -333,6 +347,7 @@ function openSetup() {
 
 function openSettings() {
   fillBudgetForm(settingsForm, settings);
+  $('set-language').value = languageOverride;
   initialSettingsValues = settingsFormValues();
   showScreen('settings', '#/settings');
 }
@@ -407,7 +422,7 @@ $('import-file').addEventListener('change', async (ev) => {
 
 /* ---------- Boot ---------- */
 
-translate(document);
+applyLanguage();
 document.addEventListener('invalid', (ev) => translateValidation(ev.target), true);
 document.addEventListener('input', (ev) => ev.target.setCustomValidity?.(''));
 document.addEventListener('change', (ev) => ev.target.setCustomValidity?.(''));

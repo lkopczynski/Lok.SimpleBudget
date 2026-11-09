@@ -9,6 +9,7 @@ A minimal, offline-first PWA to track expenses against a single recurring budget
 - Return to the top of the budget after closing a screen
 - Data stays on your device (`localStorage`); export/import as JSON in Settings
 - English, German and French, selected from the device's primary language; English fallback
+- Override the language in Settings or choose Automatic to follow the device
 - No build step, no dependencies
 
 **Live:** https://lkopczynski.github.io/Lok.SimpleBudget/
