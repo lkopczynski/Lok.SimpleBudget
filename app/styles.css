@@ -13,6 +13,9 @@
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 
+html { scrollbar-gutter: stable; }
+html:has(#expense-sheet:modal) { overflow: hidden; }
+
 body {
   margin: 0;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
@@ -73,9 +76,14 @@ main { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
 .fab:active { transform: translate(calc(-50% + 2px), 2px); box-shadow: 4px 4px 0 var(--fg); }
 
 dialog.sheet {
+  position: fixed;
+  inset: 0;
   margin: auto auto 0;
   width: 100%;
   max-width: 520px;
+  max-height: calc(100dvh - 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0;
   border-bottom: 0;
   box-shadow: none;

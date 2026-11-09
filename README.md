@@ -4,7 +4,7 @@ A minimal, offline-first PWA to track expenses against a single recurring budget
 
 - One budget: amount, currency, weekly or monthly reset
 - Add, edit and delete expenses
-- Return to the budget summary at the top after adding an expense
+- Add and edit expenses in a bottom sheet without scrolling the page behind it
 - Data stays on your device (`localStorage`); export/import as JSON in Settings
 - No build step, no dependencies
 
