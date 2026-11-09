@@ -105,6 +105,19 @@ function render() {
   $('empty').hidden = inPeriod.length > 0;
 }
 
+/* ---------- Confirmation dialog ---------- */
+
+function confirmAction(message) {
+  const confirmation = $('confirmation');
+  $('confirmation-message').textContent = message;
+  confirmation.returnValue = '';
+  return new Promise((resolve) => {
+    confirmation.addEventListener('close', () => resolve(confirmation.returnValue === 'confirm'), { once: true });
+    confirmation.showModal();
+    $('confirmation-cancel').focus({ preventScroll: true });
+  });
+}
+
 /* ---------- Expense sheet ---------- */
 
 const sheet = $('expense-sheet');
@@ -160,8 +173,8 @@ $('expense-form').addEventListener('submit', (ev) => {
   sheet.close();
 });
 
-$('exp-delete').addEventListener('click', () => {
-  if (!editingId || !confirm('Delete this expense?')) return;
+$('exp-delete').addEventListener('click', async () => {
+  if (!editingId || !await confirmAction('Delete this expense?')) return;
   expenses = expenses.filter((e) => e.id !== editingId);
   store(KEY_EXPENSES, expenses);
   sheet.close();
@@ -280,7 +293,7 @@ $('import-file').addEventListener('change', async (ev) => {
     alert('Could not read this file. Is it a budget export?');
     return;
   }
-  if (!confirm(`Replace all current data with ${backup.expenses.length} expense(s) from this file?`)) return;
+  if (!await confirmAction(`Replace all current data with ${backup.expenses.length} expense(s) from this file?`)) return;
   settings = backup.settings;
   expenses = backup.expenses;
   store(KEY_SETTINGS, settings);
